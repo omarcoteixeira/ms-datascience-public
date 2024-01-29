@@ -37,7 +37,7 @@ install.packages("patchwork")
 # own google maps api key. You can use this site
 # https://developers.google.com/maps/documentation/embed/get-api-key
 
-api_key = NA # SET HERE YOUR OWN GOOGLE MAPS API KEY
+api_key = Sys.getenv("MAPS_KEY", unset=NA)  # SET HERE YOUR OWN GOOGLE MAPS API KEY
 ```
 
 ```{r add_libraries, include=FALSE}
@@ -55,9 +55,6 @@ url_base = "https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv?accessTyp
 nypd_shooting_data_raw = read.csv(url_base, sep=",")
 ```
 
-```{r setup_maps, message=FALSE}
-nyc_map <- get_map(location = "New York", maptype = "roadmap", )
-```
 ## Project Step 2: Tidy and Transform Your Data
 Add to your Rmd document a summary of the data and clean up your dataset by changing appropriate variables to factor and date types and getting rid of any columns not needed.  Show the summary of your data to be sure there is no missing data. If there is missing data, describe how you plan to handle it.
 
@@ -130,7 +127,9 @@ nypd_shooting_by_female_age_range = nypd_shooting_cleaned %>%
 
 ```{r show_map, message=FALSE}
 # Show occurrencies on a map
-if (!is.null(api_key)) {
+if (!is.na(api_key)) {
+  print(api_key)
+  nyc_map <- get_map(location = "New York", maptype = "roadmap", )
   ggmap::register_google(key = api_key, write = TRUE)
   p = ggmap(nyc_map)
   p + geom_point(data=nypd_shooting_cleaned, aes(x=Longitude, y=Latitude), color="red", alpha=0.5)
