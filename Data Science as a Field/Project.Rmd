@@ -29,7 +29,7 @@ citation("ggmap")
 # Install required packages.
 # Remember to add your own google maps key
 # install.packages("ggmap")
-# install.packages("tidyverse")
+install.packages("tidyverse")
 # install.packages("patchwork")
 
 # ggmap::register_google(key = "AIzaSyCXT0I0yL2z3ESjYpfgRCgc1q8pbkjOIVQ", write = TRUE)
