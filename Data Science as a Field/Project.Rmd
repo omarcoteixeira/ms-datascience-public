@@ -38,6 +38,7 @@ install.packages("patchwork")
 # https://developers.google.com/maps/documentation/embed/get-api-key
 
 api_key = NA # SET HERE YOUR OWN GOOGLE MAPS API KEY 
+api_key = "AIzaSyAv4Cj_-yGvXtTz8aSi8_8wER2dHfmHzv0"
 ```
 
 ```{r add_libraries, include=FALSE}
