@@ -28,11 +28,16 @@ citation("ggmap")
 
 # Install required packages.
 # Remember to add your own google maps key
-# install.packages("ggmap")
+install.packages("lubridate")
+install.packages("ggmap")
 install.packages("tidyverse")
-# install.packages("patchwork")
+install.packages("patchwork")
 
-# ggmap::register_google(key = "AIzaSyCXT0I0yL2z3ESjYpfgRCgc1q8pbkjOIVQ", write = TRUE)
+# To visualize the google maps used in this example you need to create your 
+# own google maps api key. You can use this site
+# https://developers.google.com/maps/documentation/embed/get-api-key
+
+api_key = NA # SET HERE YOUR OWN GOOGLE MAPS API KEY 
 ```
 
 ```{r add_libraries, include=FALSE}
@@ -125,8 +130,11 @@ nypd_shooting_by_female_age_range = nypd_shooting_cleaned %>%
 
 ```{r show_map, message=FALSE}
 # Show occurrencies on a map
-p = ggmap(nyc_map)
-p + geom_point(data=nypd_shooting_cleaned, aes(x=Longitude, y=Latitude), color="red", alpha=0.5)
+if (!is.null(api_key)) {
+  ggmap::register_google(key = api_key, write = TRUE)
+  p = ggmap(nyc_map)
+  p + geom_point(data=nypd_shooting_cleaned, aes(x=Longitude, y=Latitude), color="red", alpha=0.5)
+}
 ```
 
 ```{r plot_1, message=FALSE}
