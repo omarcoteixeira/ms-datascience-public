@@ -2,45 +2,49 @@
 title: "MSDS - Datascience as a Field - Week 3"
 author: "Marco Tulio Teixeira"
 date: "2023-08-30"
+header-includes:
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- \fancyfoot[CO,CE]{MSDS - Datascience as a Field - Week 3 - Marco Tulio Teixeira - 2023-08-30}
 output:
   pdf_document: default
   html_document: default
 ---
-# Project Description
-
+# Project Summary
 Import, tidy and analyze the NYPD Shooting Incident dataset obtained. Be sure your project is reproducible and contains some visualization and analysis. You may use the data to do any analysis that is of interest to you. You should include at least two visualizations and one model. Be sure to identify any bias possible in the data and in your analysis.
 
-# Project Goals
+# Project Goals / Rationale
 Validate the number of domestic incidents by year, sex and age range.
 
-## Data Engineering Processes
+**Note:** This document/project is just a class work and should not be considered as a proper study case, and it also does not contains any author personal biases.
 
-1.   Collect
-2.   Clean
-3.   Aggregate
-4.   Visualize
-5.   Analyze
-6.   Model
+# Project Steps/Processes
 
-## Installing and adding required librarie
-```{r setup, include=FALSE}
+1.   Dependencies Installation
+2.   Data Collection and Understanding
+3.   Data Cleaning
+4.   Data Aggregation
+5.   Visualization
+6.   Analysis
+7.   Modeling
+8.   Answers and Conclusion
+
+# Dependencies Installation
+
+Installing and adding required libraries
+```{r setup, eval=FALSE, include=FALSE}
 citation("ggmap")
 
 # Install required packages.
-# Remember to add your own google maps key
+# Remember to setup the MAPS_KEY env variable in order to visualize google maps
+
 install.packages("lubridate")
-install.packages("ggmap")
+install.packages("ggmap") 
 install.packages("tidyverse")
 install.packages("patchwork")
-
-# To visualize the google maps used in this example you need to create your 
-# own google maps api key. You can use this site
-# https://developers.google.com/maps/documentation/embed/get-api-key
-
-api_key = Sys.getenv("MAPS_KEY", unset=NA)  # SET HERE YOUR OWN GOOGLE MAPS API KEY
 ```
 
-```{r add_libraries, include=FALSE}
+```{r add_libraries, message=FALSE}
 # Importing useful libraries
 library(ggmap)
 library(lubridate)
@@ -49,25 +53,34 @@ library(tidyverse)
 library(patchwork)
 ```
 
+```{r setup_google_maps, include=FALSE}
+# To visualize the google maps used in this example you need to create your 
+# own google maps api key. You can use this site
+# https://developers.google.com/maps/documentation/embed/get-api-key
+api_key = Sys.getenv("MAPS_KEY", unset=NA)  # SET HERE YOUR OWN GOOGLE MAPS API KEY
+```
+
+\newpage
+# Data Collection
+Downloading NYPD Shooting Incident Dataset
 ```{r get_data, message=FALSE}
-# Data Collecting
-url_base = "https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv?accessType=DOWNLOAD"
+url_base = "https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv"
 nypd_shooting_data_raw = read.csv(url_base, sep=",")
 ```
 
-## Project Step 2: Tidy and Transform Your Data
-Add to your Rmd document a summary of the data and clean up your dataset by changing appropriate variables to factor and date types and getting rid of any columns not needed.  Show the summary of your data to be sure there is no missing data. If there is missing data, describe how you plan to handle it.
-
-```{r summary_data}
+```{r summary_data, include=FALSE}
 # Understanding the data
 summary(nypd_shooting_data_raw)
-```
-
-```{r head_first_items, message=FALSE}
 head(nypd_shooting_data_raw)
 ```
 
-#### Cleaning data
+# Data Cleaning
+```{r data_clean_goals, include=FALSE}
+# Add to your Rmd document a summary of the data and clean up your dataset by changing appropriate variables to factor and date types and getting rid of any columns not needed.  
+# Show the summary of your data to be sure there is no missing data. If there is missing data, describe how you plan to handle it.
+```
+
+## Steps considered on data cleaning process
 * Filtering JURISDICTION_CODE where is equals to 2 (Housing);
 * Filtering VIC_SEX different the U (UNKNOW);
 * Filtering PERP_AGE_GROUP different the 1020 (ERROR DATA);
@@ -76,122 +89,203 @@ head(nypd_shooting_data_raw)
 * Removing unuseful columns: INCIDENT_KEY, OCCUR_TIME, PRECINCT, JURISDICTION_CODE, LOC_OF_OCCUR_DESC, LOC_CLASSFCTN_DESC, LOCATION_DESC, X_COORD_CD, Y_COORD_CD, Lon_Lat
 
 ```{r clean_data, message=FALSE}
+# Cleaning process
 nypd_shooting_cleaned = nypd_shooting_data_raw %>%
     filter(JURISDICTION_CODE == 2, VIC_SEX != "U", PERP_AGE_GROUP != "1020") %>%
     mutate(OCCUR_DATE = mdy(OCCUR_DATE)) %>%
-    unite("OCCUR_DATE_TIME", c(OCCUR_DATE, OCCUR_TIME), sep = " ", na.rm = TRUE, remove = FALSE) %>%
-    mutate(OCCUR_DATE_TIME = as_datetime(OCCUR_DATE_TIME), OCCUR_YEAR = year(OCCUR_DATE)) %>%
-    mutate(STATISTICAL_MURDER_FLAG = as.integer(as.logical(STATISTICAL_MURDER_FLAG))) %>%
-    select(-c(INCIDENT_KEY, OCCUR_TIME, PRECINCT, JURISDICTION_CODE, LOC_OF_OCCUR_DESC, LOC_CLASSFCTN_DESC, LOCATION_DESC, X_COORD_CD, Y_COORD_CD, Lon_Lat))
-
-summary(nypd_shooting_cleaned)
+    unite(
+      "OCCUR_DATE_TIME", c(OCCUR_DATE, OCCUR_TIME), 
+      sep = " ", na.rm = TRUE, remove = FALSE
+    ) %>%
+    mutate(
+      OCCUR_DATE_TIME = as_datetime(OCCUR_DATE_TIME), 
+      OCCUR_YEAR = year(OCCUR_DATE)
+    ) %>%
+    mutate(
+      STATISTICAL_MURDER_FLAG = as.integer(as.logical(STATISTICAL_MURDER_FLAG))
+    ) %>%
+    select(
+      -c(INCIDENT_KEY, OCCUR_TIME, PRECINCT, JURISDICTION_CODE, 
+        LOC_OF_OCCUR_DESC, LOC_CLASSFCTN_DESC, LOCATION_DESC, 
+        X_COORD_CD, Y_COORD_CD, Lon_Lat)
+    )
 ```
 
-```{r head_cleaned_data, message=FALSE}
+```{r summary_cleaned_data, message=FALSE, include=FALSE}
+# Validate applied changes:
+summary(nypd_shooting_cleaned)
 head(nypd_shooting_cleaned)
 ```
 
-## Project Step 3: Add Visualizations and Analysis
-Add at least two different visualizations & some analysis to your Rmd.  Does this raise additional questions that you should investigate?  
+\newpage
+# Data Aggregation
+Splitting data by sex:
+```{r create_datasets_sex, message=FALSE}
+nypd_shooting_by_sex = nypd_shooting_cleaned %>%
+  group_by(VIC_SEX) %>%
+  summarise(count_shoots = n(), .groups = 'drop') %>%
+  mutate(perc = (count_shoots / sum(count_shoots))*100) %>%
+  mutate(percentage = round(perc, 2))
 
-```{r create_datasets, message=FALSE}
-# Create datasets based on multiple assumptions
-
-# Shooting by Year and Sex
-nypd_shooting_by_sex_year = nypd_shooting_cleaned %>%
-  group_by(OCCUR_YEAR, VIC_SEX) %>%
-  summarise(count_shoots = n(), .groups = 'drop')
-
-nypd_shooting_by_murder_sex_year = nypd_shooting_cleaned %>%
+# Split data to validate if there is a murder or not 
+nypd_shooting_by_sex_with_murder = nypd_shooting_cleaned %>%
   filter(STATISTICAL_MURDER_FLAG == 1) %>%
-  group_by(OCCUR_YEAR, VIC_SEX) %>%
-  summarise(count_shoots = n(), .groups = 'drop')
+  group_by(VIC_SEX) %>%
+  summarise(count_shoots = n(), .groups = 'drop') %>%
+  mutate(perc = (count_shoots / sum(count_shoots))*100) %>%
+  mutate(percentage = round(perc, 2))
 
-nypd_shooting_by_no_murder_sex_year = nypd_shooting_cleaned %>%
+nypd_shooting_by_sex_with_no_murder = nypd_shooting_cleaned %>%
   filter(STATISTICAL_MURDER_FLAG == 0) %>%
-  group_by(OCCUR_YEAR, VIC_SEX) %>%
-  summarise(count_shoots = n(), .groups = 'drop')
+  group_by(VIC_SEX) %>%
+  summarise(count_shoots = n(), .groups = 'drop') %>%
+  mutate(perc = (count_shoots / sum(count_shoots))*100) %>%
+  mutate(percentage = round(perc, 2))
 
+```
+
+Splitting data by sex and age range:
+```{r create_datasets_age_range, message=FALSE}
 nypd_shooting_by_male_age_range = nypd_shooting_cleaned %>%
   filter(!is.na(PERP_AGE_GROUP), PERP_AGE_GROUP != "", PERP_AGE_GROUP != "(null)" ) %>%
   filter(VIC_SEX == "M") %>%
-  group_by(OCCUR_YEAR, PERP_AGE_GROUP) %>%
-  summarise(count_shoots = n(), .groups = 'drop')
+  group_by(PERP_AGE_GROUP) %>%
+  summarise(count_shoots = n(), .groups = 'drop') %>%
+  mutate(perc = (count_shoots / sum(count_shoots))*100) %>%
+  mutate(percentage = round(perc, 2))
 
 nypd_shooting_by_female_age_range = nypd_shooting_cleaned %>%
   filter(!is.na(PERP_AGE_GROUP), PERP_AGE_GROUP != "", PERP_AGE_GROUP != "(null)" ) %>%
   filter(VIC_SEX == "F") %>%
-  group_by(OCCUR_YEAR, PERP_AGE_GROUP) %>%
-  summarise(count_shoots = n(), .groups = 'drop')
+  group_by(PERP_AGE_GROUP) %>%
+  summarise(count_shoots = n(), .groups = 'drop') %>%
+  mutate(perc = (count_shoots / sum(count_shoots))*100) %>%
+  mutate(percentage = round(perc, 2))
 ```
 
-```{r show_map, message=FALSE}
+\newpage
+Splitting data by sex and race:
+```{r create_datasets_race, message=FALSE}
+nypd_shooting_male_by_race = nypd_shooting_cleaned %>%
+  filter(!is.na(PERP_RACE), PERP_RACE != "", PERP_RACE != "(null)" ) %>%
+  filter(VIC_SEX == "M") %>%
+  group_by(PERP_RACE) %>%
+  summarise(count_shoots = n(), .groups = 'drop') %>%
+  mutate(perc = (count_shoots / sum(count_shoots))*100) %>%
+  mutate(percentage = round(perc, 2))
+
+nypd_shooting_female_by_race = nypd_shooting_cleaned %>%
+  filter(!is.na(PERP_RACE), PERP_RACE != "", PERP_RACE != "(null)" ) %>%
+  filter(VIC_SEX == "F") %>%
+  group_by(PERP_RACE) %>%
+  summarise(count_shoots = n(), .groups = 'drop') %>%
+  mutate(perc = (count_shoots / sum(count_shoots))*100) %>%
+  mutate(percentage = round(perc, 2))
+```
+
+\newpage
+# Data Visualization
+## Spatial Analysis
+```{r show_map, message=FALSE, eval=!is.na(api_key)}
 # Show occurrencies on a map
-if (!is.na(api_key)) {
-  print(api_key)
-  nyc_map <- get_map(location = "New York", maptype = "roadmap", )
-  ggmap::register_google(key = api_key, write = TRUE)
-  p = ggmap(nyc_map)
-  p + geom_point(data=nypd_shooting_cleaned, aes(x=Longitude, y=Latitude), color="red", alpha=0.5)
-}
+nyc_map <- get_map(location = "New York", maptype = "roadmap", )
+ggmap::register_google(key = api_key, write = TRUE)
+p = ggmap(nyc_map)
+p + geom_point(
+  data=nypd_shooting_cleaned, 
+  aes(x=Longitude, y=Latitude), 
+  color="red", 
+  alpha=0.5
+)
 ```
 
-```{r plot_1, message=FALSE}
-# plot
-options(repr.plot.width = 20, repr.plot.height = 8)
+\newpage
+## Demographic Analysis 
+### Victims by Sex
+- At the first sigh we can conclude that the number of domestic shots incidents are greater for victims are categorized as the **Sex M (Male)**
 
-nypd_shooting_by_sex_year %>%
-  ggplot(aes(x=OCCUR_YEAR, y=count_shoots, group=VIC_SEX, color=VIC_SEX)) +
-    geom_line() +
-    ggtitle("Shots by Sex") +
-    ylab("Number of shots") +
-    xlab("Year")
+```{r plot_victims_by_sex, message=FALSE, fig.show="hold", out.width="50%", echo=FALSE}
+# Basic piechart
+ggplot(nypd_shooting_by_sex, aes(x="", y=percentage, fill=VIC_SEX)) +
+  geom_bar(stat="identity", width=1, color="white") +
+  geom_text(aes(label = paste0(percentage, "%")), color="white",
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start=0) +
+  ggtitle("Shots by Sex") +
+  guides(fill = guide_legend(title = "Sex")) +
+  theme_void()
 
-nypd_shooting_by_murder_sex_year %>%
-  ggplot(aes(x=OCCUR_YEAR, y=count_shoots, group=VIC_SEX, color=VIC_SEX)) +
-    geom_line() +
-    ggtitle("Shots by Sex with murder") +
-    ylab("Number of shots") +
-    xlab("Year")
+ggplot(nypd_shooting_by_sex_with_no_murder, aes(x="", y=percentage, fill=VIC_SEX)) +
+  geom_bar(stat="identity", width=1, color="white") +
+  geom_text(aes(label = paste0(percentage, "%")), color="white",
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start=0) +
+  ggtitle("Shots by Sex (No Murder)") +
+  guides(fill = guide_legend(title = "Sex")) +
+  theme_void()
 
-nypd_shooting_by_no_murder_sex_year %>%
-  ggplot(aes(x=OCCUR_YEAR, y=count_shoots, group=VIC_SEX, color=VIC_SEX)) +
-    geom_line() +
-    ggtitle("Shots by Sex with no murder") +
-    ylab("Number of shots") +
-    xlab("Year")
+ggplot(nypd_shooting_by_sex_with_murder, aes(x="", y=percentage, fill=VIC_SEX)) +
+  geom_bar(stat="identity", width=1, color="white") +
+  geom_text(aes(label = paste0(percentage, "%")), color="white",
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start=0) +
+  ggtitle("Shots by Sex (Murder)") +
+  guides(fill = guide_legend(title = "Sex")) +
+  theme_void()
 ```
 
-## Incidents by age range
+\newpage
+### Victims by Age
+- The number of incidents are higher in the age ranges of 18-24 and 25-44 for both **Female** and **Male**
 
-```{r plot_2, message=FALSE}
-nypd_shooting_by_male_age_range %>%
-  ggplot(aes(x=PERP_AGE_GROUP, y=count_shoots)) +
-    geom_bar(stat="identity") +
-    ggtitle("Male shots by age range") +
-    ylab("Number of shots") +
-    xlab("Age Range")
+```{r plot_2, message=FALSE, fig.show="hold", out.width="50%", echo=FALSE}
+ggplot(nypd_shooting_by_male_age_range, aes(x="", y=percentage, fill=PERP_AGE_GROUP)) +
+  geom_bar(stat="identity", width=1, color="white") +
+  geom_text(aes(label = paste0(percentage, "%")), color="white",
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start=0) +
+  ggtitle("Male shots by age range") +
+  guides(fill = guide_legend(title = "Age Group")) +
+  theme_void()
+
+ggplot(nypd_shooting_by_female_age_range, aes(x="", y=percentage, fill=PERP_AGE_GROUP)) +
+  geom_bar(stat="identity", width=1, color="white") +
+  geom_text(aes(label = paste0(percentage, "%")), color="white",
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start=0) +
+  ggtitle("Female shots by age range") +
+  guides(fill = guide_legend(title = "Age Group")) +
+  theme_void()
 ```
 
-```{r plot_3, message=FALSE}
-nypd_shooting_by_female_age_range %>%
-  ggplot(aes(x=PERP_AGE_GROUP, y=count_shoots)) +
-    geom_bar(stat="identity") +
-    ggtitle("Female shots by age range") +
-    ylab("Number of shots") +
-    xlab("Age Range")
+\newpage
+### Victims by race
+- Considering only the information provided at this moment we can assume that there's a huge difference between victims by race.
+- Could be interesting to have a comparison between social classes, education level and neighbors to achieve a better understanding.
+
+```{r plot_victims_by_race, message=FALSE, fig.show="hold", out.width="50%", echo=FALSE}
+ggplot(nypd_shooting_female_by_race, aes(x="", y=percentage, fill=PERP_RACE)) +
+  geom_bar(stat="identity", width=1, color="white") +
+  geom_text(aes(x=1.65, label = paste0(percentage, "%")),
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start=0) +
+  ggtitle("Female Shots by race") +
+  guides(fill = guide_legend(title = "Race")) +
+  theme_void()
+
+ggplot(nypd_shooting_male_by_race, aes(x="", y=percentage, fill=PERP_RACE)) +
+  geom_bar(stat="identity", width=1, color="white") +
+  geom_text(aes(x=1.65, label = paste0(percentage, "%")),
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start=0) +
+  ggtitle("Male Shots by race") +
+  guides(fill = guide_legend(title = "Race")) +
+  theme_void()
 ```
 
-## Project Step 4: Add Bias Identification
-Write the conclusion to your project report and include any possible sources of bias.  Be sure to identify what your personal bias might be and how you have mitigated that.
-
-#### Answers and Conclusion
+\newpage
+# Analysis and Conclusion
 
 * The initial year provided by the dataset is 2006;
-* The number of incidents is higher from 2020;
-* This dataset doesn't have information about the reasons or motive of the incidents;
-* At the first sigh we can conclude that the number of domestic shots incidents are greater for victims categorized as the sex M (Male);
-* The number of incidents are higher in the age ranges of 18-24 and 25-44 for both Female and Male;
-* As bias indentification:
-  * Looking into the raw dataset we can assume that newest incidents are well reported and the information provided at this period is complete.
-  * Using only this data can lead to misinformation and should be interesting to aggregate this data with other data sources like social classes, poverty and so.
+* Dataset contains a sort of biases - Newest incidents are well reported than old ones;
+* The usage of other dataset to aggregate more information should be considered to a better understanding of this data - Datasets like Social Classes, poverty, political situations and others.
