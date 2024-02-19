@@ -1,0 +1,12 @@
+ggplot2
+ggmap
+lubridate
+dplyr
+tidyverse
+tibble
+tidyr
+readr
+purrr
+stringr
+forcats
+patchwork

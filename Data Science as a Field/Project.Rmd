@@ -16,7 +16,8 @@ Import, tidy and analyze the NYPD Shooting Incident dataset obtained. Be sure yo
 # Project Goals / Rationale
 Validate the number of domestic incidents by year, sex and age range.
 
-**Note:** This document/project is just a class work and should not be considered as a proper study case, and it also does not contains any author personal biases.
+**Note:** This document/presentation doesn’t contain any political or any type of discrimination. It also should not be considered a proper analysis due the limited amount of information.
+
 
 # Project Steps/Processes
 
